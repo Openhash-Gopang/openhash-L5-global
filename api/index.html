@@ -2,63 +2,391 @@
 <html lang="ko">
 <head>
 <meta charset="UTF-8">
-<title>OpenHash L5-global Node API</title>
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>OpenHash Node</title>
 <style>
-body{font-family:monospace;background:#0d1117;color:#c9d1d9;padding:20px;}
-h1{color:#58a6ff;}
-.badge{display:inline-block;padding:3px 10px;border-radius:12px;font-size:12px;font-weight:700;}
-.l1{background:#1a3a1a;color:#3fb950;}
-.l2{background:#1a2a3a;color:#58a6ff;}
-.l3{background:#2a1a3a;color:#bc8cff;}
-.l4{background:#3a2a1a;color:#e3b341;}
-.l5{background:#3a1a1a;color:#f85149;}
-pre{background:#161b22;padding:16px;border-radius:6px;overflow-x:auto;}
-.endpoint{color:#58a6ff;text-decoration:underline;cursor:pointer;}
+:root {
+  --bg:       #f2f2f7;
+  --bg2:      #ffffff;
+  --bg3:      #e5e5ea;
+  --label:    #000000;
+  --label2:   rgba(60,60,67,.6);
+  --label3:   rgba(60,60,67,.3);
+  --sep:      rgba(60,60,67,.29);
+  --blue:     #007aff;
+  --green:    #34c759;
+  --orange:   #ff9500;
+  --red:      #ff3b30;
+  --purple:   #af52de;
+  --teal:     #30b0c7;
+  --fill:     rgba(120,120,128,.12);
+  --fill2:    rgba(120,120,128,.16);
+  --radius:   13px;
+  --radius-sm:10px;
+}
+@media(prefers-color-scheme:dark){:root{
+  --bg:#000000; --bg2:#1c1c1e; --bg3:#2c2c2e;
+  --label:#ffffff; --label2:rgba(235,235,245,.6);
+  --label3:rgba(235,235,245,.3); --sep:rgba(84,84,88,.6);
+  --fill:rgba(120,120,128,.2); --fill2:rgba(120,120,128,.32);
+}}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
+html{background:var(--bg);}
+body{font-family:-apple-system,BlinkMacSystemFont,'SF Pro Text',sans-serif;
+  background:var(--bg);color:var(--label);
+  font-size:17px;line-height:1.47059;
+  -webkit-font-smoothing:antialiased;
+  max-width:640px;margin:0 auto;
+  padding:env(safe-area-inset-top,20px) 0 40px;}
+
+/* ── 상단 헤더 ── */
+.header{padding:20px 20px 0;margin-bottom:24px;}
+.header-top{display:flex;align-items:center;gap:12px;margin-bottom:8px;}
+.chain-icon{font-size:28px;}
+.header h1{font-size:28px;font-weight:700;letter-spacing:.35px;color:var(--label);}
+.layer-badge{display:inline-flex;align-items:center;gap:6px;
+  padding:5px 12px;border-radius:20px;font-size:13px;font-weight:600;
+  letter-spacing:.08px;}
+.l1{background:rgba(52,199,89,.15);color:var(--green);}
+.l2{background:rgba(0,122,255,.15);color:var(--blue);}
+.l3{background:rgba(175,82,222,.15);color:var(--purple);}
+.l4{background:rgba(255,149,0,.15);color:var(--orange);}
+.l5{background:rgba(255,59,48,.15);color:var(--red);}
+.node-id{font-size:15px;font-weight:500;color:var(--label2);
+  font-family:'SF Mono',monospace;margin-top:4px;}
+
+/* ── 섹션 ── */
+.section{margin-bottom:16px;}
+.section-header{font-size:13px;font-weight:600;color:var(--label2);
+  text-transform:uppercase;letter-spacing:.6px;
+  padding:0 20px;margin-bottom:6px;}
+.card{background:var(--bg2);border-radius:var(--radius);
+  margin:0 16px;overflow:hidden;}
+.card-row{display:flex;align-items:center;padding:11px 16px;
+  border-bottom:.5px solid var(--sep);gap:12px;min-height:44px;}
+.card-row:last-child{border-bottom:none;}
+.card-row a{color:var(--blue);text-decoration:none;font-size:15px;flex:1;}
+.card-row a:hover{opacity:.7;}
+.row-label{font-size:15px;color:var(--label);flex:1;}
+.row-value{font-size:15px;color:var(--label2);
+  font-family:'SF Mono',monospace;font-size:13px;text-align:right;}
+.row-icon{font-size:17px;width:28px;text-align:center;flex-shrink:0;}
+.chevron{color:var(--label3);font-size:12px;flex-shrink:0;}
+
+/* ── 상태 뱃지 ── */
+.status-dot{width:8px;height:8px;border-radius:50%;
+  background:var(--green);flex-shrink:0;
+  box-shadow:0 0 0 2px rgba(52,199,89,.25);}
+.status-dot.warning{background:var(--orange);}
+.status-dot.error{background:var(--red);}
+
+/* ── 검색 ── */
+.search-wrap{padding:0 16px;}
+.search-bar{display:flex;align-items:center;gap:8px;
+  background:var(--bg2);border-radius:var(--radius);
+  padding:10px 14px;margin-bottom:12px;}
+.search-bar svg{width:16px;height:16px;color:var(--label3);flex-shrink:0;}
+.search-input{flex:1;background:transparent;border:none;outline:none;
+  font-size:17px;color:var(--label);font-family:inherit;}
+.search-input::placeholder{color:var(--label3);}
+.search-btn{padding:10px 20px;background:var(--blue);color:#fff;
+  border:none;border-radius:var(--radius-sm);font-size:15px;
+  font-weight:600;cursor:pointer;flex-shrink:0;transition:opacity .15s;}
+.search-btn:hover{opacity:.8;}
+.search-btn:active{opacity:.6;}
+.result-card{background:var(--bg2);border-radius:var(--radius);
+  padding:14px 16px;display:none;}
+.result-card.show{display:block;}
+.result-label{font-size:12px;font-weight:600;color:var(--label2);
+  text-transform:uppercase;letter-spacing:.5px;margin-bottom:8px;}
+.result-pre{font-size:13px;line-height:1.6;color:var(--label);
+  font-family:'SF Mono','Courier New',monospace;
+  white-space:pre-wrap;word-break:break-all;}
+.result-empty{font-size:15px;color:var(--label2);text-align:center;
+  padding:16px 0;}
+
+/* ── 해시 체인 ── */
+.chain-scroll{overflow-x:auto;padding:0 16px;scrollbar-width:none;}
+.chain-scroll::-webkit-scrollbar{display:none;}
+.chain-row{display:flex;align-items:center;gap:6px;min-width:max-content;padding-bottom:4px;}
+.hc-block{background:var(--bg2);border-radius:var(--radius-sm);
+  padding:10px 12px;min-width:120px;flex-shrink:0;
+  border:.5px solid var(--sep);}
+.hc-block.genesis{border-color:var(--orange);
+  background:rgba(255,149,0,.06);}
+.hc-block.latest{border-color:var(--blue);
+  background:rgba(0,122,255,.06);}
+.hc-num{font-size:10px;font-weight:700;color:var(--label3);
+  text-transform:uppercase;letter-spacing:.4px;margin-bottom:4px;}
+.hc-num.genesis-num{color:var(--orange);}
+.hc-num.latest-num{color:var(--blue);}
+.hc-hash{font-size:10px;font-family:'SF Mono',monospace;
+  color:var(--label2);background:var(--fill);
+  padding:3px 6px;border-radius:4px;margin-bottom:4px;
+  word-break:break-all;line-height:1.4;}
+.hc-what{font-size:11px;color:var(--label2);
+  white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:100px;}
+.hc-valid{font-size:10px;font-weight:600;color:var(--green);margin-top:4px;}
+.hc-arrow{color:var(--label3);font-size:14px;flex-shrink:0;}
+
+/* ── Footer ── */
+.footer{padding:20px 20px 0;
+  font-size:13px;color:var(--label3);text-align:center;line-height:1.6;}
+
+/* ── 로딩 ── */
+.skeleton{background:var(--fill2);border-radius:4px;
+  animation:shimmer 1.5s infinite;}
+@keyframes shimmer{0%,100%{opacity:.4}50%{opacity:.8}}
 </style>
 </head>
 <body>
-<h1>⛓ OpenHash Node</h1>
-<p>
-  <span class="badge l5">Layer 5</span>
-  &nbsp;<strong>KR-JEJU-JEJU-IDO1-L5</strong>
-</p>
-<h2>📡 API Endpoints</h2>
-<pre>
-GET /node.json           → 노드 정보
-GET /routing_table.json  → 사용자 라우팅 테이블
-GET /blocks/block_NNNN.json → 개별 블록
-GET /chain_status.json   → 체인 상태 요약
-</pre>
-<h2>🔗 Quick Links</h2>
-<ul>
-  <li><a href="../node.json" style="color:#58a6ff;">node.json</a></li>
-  <li><a href="../routing_table.json" style="color:#58a6ff;">routing_table.json</a></li>
-  <li><a href="../blocks/block_0000.json" style="color:#58a6ff;">Genesis Block</a></li>
-  <li><a href="../chain_status.json" style="color:#58a6ff;">Chain Status</a></li>
-</ul>
-<h2>🔍 사용자 검색 (GDUDA)</h2>
-<input id="q" placeholder="고팡 ID 입력..." style="padding:8px;width:300px;background:#161b22;color:#c9d1d9;border:1px solid #30363d;border-radius:6px;">
-<button onclick="lookup()" style="padding:8px 16px;background:#238636;color:#fff;border:none;border-radius:6px;cursor:pointer;">검색</button>
-<pre id="result">검색 결과가 여기에 표시됩니다.</pre>
+
+<div class="header">
+  <div class="header-top">
+    <span class="chain-icon">⛓</span>
+    <h1>OpenHash Node</h1>
+  </div>
+  <span class="layer-badge l1" id="layer-badge">Layer 1</span>
+  <div class="node-id" id="node-id">로딩 중...</div>
+</div>
+
+<!-- 노드 상태 -->
+<div class="section">
+  <div class="section-header">노드 상태</div>
+  <div class="card">
+    <div class="card-row">
+      <div class="status-dot" id="status-dot"></div>
+      <span class="row-label" id="status-label">연결 확인 중...</span>
+      <span class="row-value" id="status-time"></span>
+    </div>
+    <div class="card-row">
+      <span class="row-icon">📦</span>
+      <span class="row-label">총 블록</span>
+      <span class="row-value" id="total-blocks">—</span>
+    </div>
+    <div class="card-row">
+      <span class="row-icon">🔗</span>
+      <span class="row-label">최신 해시</span>
+      <span class="row-value" id="latest-hash" style="max-width:160px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">—</span>
+    </div>
+    <div class="card-row">
+      <span class="row-icon">🌐</span>
+      <span class="row-label">OpenHash</span>
+      <span class="row-value" id="openhash-tx">PENDING</span>
+    </div>
+  </div>
+</div>
+
+<!-- 해시체인 시각화 -->
+<div class="section">
+  <div class="section-header">해시체인 (SHA-256)</div>
+  <div class="chain-scroll">
+    <div class="chain-row" id="chain-row">
+      <div class="hc-block"><div class="hc-hash skeleton" style="height:14px;width:80px;"></div></div>
+    </div>
+  </div>
+</div>
+
+<!-- 등록 사용자 -->
+<div class="section">
+  <div class="section-header">등록 사용자</div>
+  <div class="card" id="users-card">
+    <div class="card-row">
+      <span class="row-icon">👤</span>
+      <span class="row-label skeleton" style="height:14px;width:80px;border-radius:4px;"></span>
+    </div>
+  </div>
+</div>
+
+<!-- API 엔드포인트 -->
+<div class="section">
+  <div class="section-header">API 엔드포인트</div>
+  <div class="card">
+    <div class="card-row">
+      <span class="row-icon">📄</span>
+      <a href="../node.json">node.json</a>
+      <span class="chevron">›</span>
+    </div>
+    <div class="card-row">
+      <span class="row-icon">🗺</span>
+      <a href="../routing_table.json">routing_table.json</a>
+      <span class="chevron">›</span>
+    </div>
+    <div class="card-row">
+      <span class="row-icon">⛓</span>
+      <a href="../blocks/block_0000.json">Genesis Block</a>
+      <span class="chevron">›</span>
+    </div>
+    <div class="card-row">
+      <span class="row-icon">📊</span>
+      <a href="../chain_status.json">chain_status.json</a>
+      <span class="chevron">›</span>
+    </div>
+  </div>
+</div>
+
+<!-- GDUDA 사용자 검색 -->
+<div class="section">
+  <div class="section-header">사용자 검색 (GDUDA)</div>
+  <div class="search-wrap">
+    <div class="search-bar">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/>
+      </svg>
+      <input class="search-input" id="search-input"
+        placeholder="고팡 ID 또는 GUID 입력..."
+        onkeydown="if(event.key==='Enter') doSearch()">
+      <button class="search-btn" onclick="doSearch()">검색</button>
+    </div>
+    <div class="result-card" id="result-card">
+      <div class="result-label" id="result-label">검색 결과</div>
+      <div class="result-pre" id="result-pre"></div>
+    </div>
+  </div>
+</div>
+
+<div class="footer">
+  OpenHash Network v2.2 · AI City Inc.<br>
+  GDUDA v1.0 · 제주특별자치도<br>
+  <span id="footer-node"></span>
+</div>
+
 <script>
-async function lookup(){
-  const q = document.getElementById('q').value.trim();
-  if(!q) return;
+const BASE = '../';
+const LAYER_COLORS = {1:'l1',2:'l2',3:'l3',4:'l4',5:'l5'};
+const LAYER_NAMES  = {1:'Layer 1 — 읍면동',2:'Layer 2 — 시군구',
+                      3:'Layer 3 — 광역',4:'Layer 4 — 국가',5:'Layer 5 — 글로벌'};
+
+async function loadAll(){
   try{
-    const r = await fetch('../routing_table.json');
-    const data = await r.json();
-    const found = data.users.find(u => u.gopang_id === q || u.guid.startsWith(q));
-    document.getElementById('result').textContent =
-      found ? JSON.stringify(found, null, 2) : '사용자를 찾을 수 없습니다.\n상위 계층으로 라우팅 중...';
+    const [nodeRes, statusRes, rtRes] = await Promise.all([
+      fetch(BASE+'node.json'),
+      fetch(BASE+'chain_status.json'),
+      fetch(BASE+'routing_table.json')
+    ]);
+    const node   = await nodeRes.json();
+    const status = await statusRes.json();
+    const rt     = await rtRes.json();
+
+    // 헤더
+    const lv = node.layer || 1;
+    document.getElementById('layer-badge').textContent = LAYER_NAMES[lv] || 'Layer '+lv;
+    document.getElementById('layer-badge').className   = 'layer-badge '+(LAYER_COLORS[lv]||'l1');
+    document.getElementById('node-id').textContent     = node.node_id;
+    document.getElementById('footer-node').textContent = node.node_id;
+
+    // 상태
+    const dot   = document.getElementById('status-dot');
+    const valid = status.chain_valid;
+    dot.className = 'status-dot'+(valid?'':' error');
+    document.getElementById('status-label').textContent =
+      valid ? '체인 정상 (ILMV 검증 완료)' : '⚠ 체인 이상 감지';
+    const t = new Date(status.last_verified);
+    document.getElementById('status-time').textContent =
+      t.toLocaleString('ko-KR',{month:'2-digit',day:'2-digit',
+      hour:'2-digit',minute:'2-digit'});
+    document.getElementById('total-blocks').textContent =
+      (status.total_blocks||0)+'개';
+    document.getElementById('latest-hash').textContent =
+      (status.latest_hash||'').slice(0,20)+'...';
+    document.getElementById('openhash-tx').textContent =
+      status.openhash_tx||'PENDING';
+
+    // 해시체인 시각화
+    await renderChain(status.total_blocks||1);
+
+    // 사용자 목록
+    renderUsers(rt.users||[]);
+
   }catch(e){
-    document.getElementById('result').textContent = 'Error: '+e.message;
+    document.getElementById('status-label').textContent = '노드 연결 실패';
+    document.getElementById('status-dot').className = 'status-dot error';
+    console.error(e);
   }
 }
+
+async function renderChain(totalBlocks){
+  const row = document.getElementById('chain-row');
+  row.innerHTML = '';
+  const maxShow = Math.min(totalBlocks, 6);
+  const startFrom = Math.max(0, totalBlocks - maxShow);
+
+  for(let i = startFrom; i < totalBlocks; i++){
+    if(i > startFrom){
+      const arrow = document.createElement('span');
+      arrow.className = 'hc-arrow'; arrow.textContent = '→';
+      row.appendChild(arrow);
+    }
+    try{
+      const r = await fetch(BASE+'blocks/block_'+String(i).padStart(4,'0')+'.json');
+      const b = await r.json();
+      const isGenesis = i===0;
+      const isLatest  = i===totalBlocks-1;
+      const div = document.createElement('div');
+      div.className = 'hc-block'+(isGenesis?' genesis':isLatest?' latest':'');
+      const numClass = isGenesis?'genesis-num':isLatest?'latest-num':'';
+      const label    = isGenesis?'Genesis':'#'+i+(isLatest?' Latest':'');
+      div.innerHTML =
+        '<div class="hc-num '+numClass+'">'+label+'</div>'+
+        '<div class="hc-hash">'+(b.hash||'').slice(0,12)+'...'+(b.hash||'').slice(-4)+'</div>'+
+        '<div class="hc-what">'+(b.block_type||'')+'</div>'+
+        '<div class="hc-valid">✓ valid</div>';
+      row.appendChild(div);
+    }catch(e){}
+  }
+  // 최신 블록으로 스크롤
+  const scroll = document.querySelector('.chain-scroll');
+  setTimeout(()=>{ scroll.scrollLeft = scroll.scrollWidth; }, 100);
+}
+
+function renderUsers(users){
+  const card = document.getElementById('users-card');
+  if(!users.length){
+    card.innerHTML = '<div class="card-row"><span class="row-label" style="color:var(--label2)">등록된 사용자가 없습니다.</span></div>';
+    return;
+  }
+  card.innerHTML = users.map(u=>`
+    <div class="card-row">
+      <span class="row-icon">👤</span>
+      <div style="flex:1;">
+        <div style="font-size:15px;font-weight:500;">${u.display||u.gopang_id}</div>
+        <div style="font-size:12px;color:var(--label2);">@${u.gopang_id} · ${u.l1_node}</div>
+      </div>
+      <span class="row-value" style="font-size:11px;">${u.status==='active'?'🟢 활성':'⚫ 비활성'}</span>
+    </div>`).join('');
+}
+
+async function doSearch(){
+  const q = document.getElementById('search-input').value.trim();
+  if(!q) return;
+  const card  = document.getElementById('result-card');
+  const pre   = document.getElementById('result-pre');
+  const label = document.getElementById('result-label');
+  card.classList.add('show');
+  pre.textContent = '검색 중...';
+  label.textContent = '검색 결과';
+  try{
+    const r  = await fetch(BASE+'routing_table.json');
+    const rt = await r.json();
+    const found = (rt.users||[]).find(u=>
+      u.gopang_id===q || u.guid===q || (u.display&&u.display.includes(q)));
+    if(found){
+      label.textContent = '✓ 사용자 발견 — '+found.gopang_id;
+      pre.textContent = JSON.stringify(found, null, 2);
+    } else {
+      pre.innerHTML = '<span style="color:var(--label2)">이 노드에서 찾지 못했습니다.\n상위 계층(L2→L3→L4)으로 라우팅이 필요합니다.</span>';
+    }
+  }catch(e){
+    pre.textContent = 'Error: '+e.message;
+  }
+}
+
+document.getElementById('search-input').addEventListener('input', ()=>{
+  if(!document.getElementById('search-input').value.trim())
+    document.getElementById('result-card').classList.remove('show');
+});
+
+loadAll();
 </script>
-<hr style="border-color:#30363d;margin-top:40px;">
-<p style="color:#484f58;font-size:12px;">
-  OpenHash Network v2.2 · AI City Inc. · 제주특별자치도<br>
-  Layer 5 Node · KR-JEJU-JEJU-IDO1-L5
-</p>
 </body>
 </html>
