@@ -1,0 +1,101 @@
+name: HASH_CHAIN_ANCHOR — GLOBAL
+
+# buildout_plan_v2 Phase 1
+# 호출자: worker.js handleOpenhashAnchor → repository_dispatch
+# 이벤트: HASH_CHAIN_ANCHOR
+# 역할:   hashChain.js anchor()가 생성한 entryHash를 블록으로 기록
+
+on:
+  repository_dispatch:
+    types: [HASH_CHAIN_ANCHOR]
+
+jobs:
+  anchor:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Write anchor block
+        run: |
+          python3 - << 'PY'
+          import json, hashlib, os
+          from datetime import datetime, timezone
+
+          payload = json.loads(r"""${{ toJson(github.event.client_payload) }}""")
+          now     = datetime.now(timezone.utc).isoformat()
+
+          # chain_status.json 읽기
+          with open('chain_status.json', 'r', encoding='utf-8') as f:
+              status = json.load(f)
+
+          prev_hash    = status.get('latest_hash', '0' * 64)
+          block_number = status.get('total_blocks', 0)
+
+          # 블록 구성
+          block = {
+              'block_number': block_number,
+              'block_type':   'HASH_CHAIN_ANCHOR',
+              'node_id':      status.get('node_id', 'KR-JEJU-JEJU-IDO1'),
+              'layer':        status.get('layer', 1),
+              'timestamp':    now,
+              'data': {
+                  'entry_hash':   payload.get('entry_hash', ''),
+                  'content_hash': payload.get('content_hash', ''),
+                  'msg_id':       payload.get('msg_id', ''),
+                  'signatures':   payload.get('signatures', []),
+                  'merkle_layer': payload.get('merkle_layer', 'L5'),
+                  'score':        payload.get('score', 0),
+                  'lcat':         payload.get('lcat', 'B'),
+                  'block_height': payload.get('block_height', 0),
+                  'submitted_at': payload.get('submitted_at', now),
+              },
+              'prev_hash':   prev_hash,
+              'nonce':       0,
+              'openhash_tx': 'CONFIRMED',
+          }
+
+          # block_hash: SHA-256(prev_hash ∥ entry_hash ∥ block_number ∥ timestamp)
+          raw = (
+              prev_hash
+              + block['data']['entry_hash']
+              + str(block_number)
+              + now
+          ).encode('utf-8')
+          block['hash'] = hashlib.sha256(raw).hexdigest()
+
+          # 블록 파일 저장
+          fname = f"blocks/block_{block_number:04d}.json"
+          os.makedirs('blocks', exist_ok=True)
+          with open(fname, 'w', encoding='utf-8') as f:
+              json.dump(block, f, ensure_ascii=False, indent=2)
+
+          # chain_status.json 갱신
+          status['total_blocks']  = block_number + 1
+          status['latest_hash']   = block['hash']
+          status['latest_block']  = block_number
+          status['last_verified'] = now
+          status['openhash_tx']   = 'CONFIRMED'
+
+          with open('chain_status.json', 'w', encoding='utf-8') as f:
+              json.dump(status, f, ensure_ascii=False, indent=2)
+
+          print(f"[ANCHOR] block={block_number} hash={block['hash'][:16]}... entry={block['data']['entry_hash'][:16]}...")
+          PY
+
+      - name: Commit anchor block
+        run: |
+          git config user.name  "openhash-bot"
+          git config user.email "bot@openhash.kr"
+          git add blocks/ chain_status.json
+          BLOCK_NUM=$(python3 -c "import json; print(json.load(open('chain_status.json'))['latest_block'])")
+          ENTRY_SHORT=$(python3 -c "
+          import json, glob
+          fname = f'blocks/block_{int(\"$BLOCK_NUM\"):04d}.json'
+          d = json.load(open(fname))
+          print(d['data']['entry_hash'][:16])
+          ")
+          git commit -m "anchor: block_${BLOCK_NUM} — ${ENTRY_SHORT}..."
+          git push
