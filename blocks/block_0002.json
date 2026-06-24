@@ -1,0 +1,24 @@
+{
+  "block_number": 2,
+  "block_type": "HASH_CHAIN_ANCHOR",
+  "node_id": "KR-JEJU-JEJU-IDO1-L5",
+  "layer": 5,
+  "timestamp": "2026-06-24T01:36:55.669004+00:00",
+  "data": {
+    "entry_hash": "a030a0a2e3a951c504c1418de9fee75b42b8b773ce6ee38ac9867be58abb0233",
+    "content_hash": "fa6641e20265fc75375e8c1b0d93c7f996b734da80da4fd1a09ea112d862aff1",
+    "msg_id": "REG-2601db80e367-1782265009306",
+    "signatures": [
+      "2601:db80:e367:aebd:30bc:5bc2:978d:a094"
+    ],
+    "merkle_layer": "L5",
+    "score": 0,
+    "lcat": "B",
+    "block_height": 1782265009,
+    "submitted_at": "2026-06-24T01:36:49.309Z"
+  },
+  "prev_hash": "861399be675bc43f671b0472b0901d866e48e04a520df2a126441617de7845e2",
+  "nonce": 0,
+  "openhash_tx": "CONFIRMED",
+  "hash": "a830d1b18a4d25b9bc560b1cc7fea328fd1f19a87317979a061d8647d062a436"
+}
